@@ -1,16 +1,30 @@
-# `drv2605 Haptic Driver` driver for Rust
+# drv2605l
 
-This module implements a driver for the drv2605, a Haptic Driver
-device addressable via I2C.  It was implemented against this
-board: https://www.adafruit.com/product/2305
+This module implements a driver for the drv2605l, a Haptic Driver device addressable via I2C from Texas Instruments.
+
+Its rather fully featured implementation for both LRA and ERM motors including:
+
+- Internal rom library sequencing and playback
+- Pwm playback at the in/trig pin
+- Real time playback over i2c commands
+- Analog voltage input at the in/trig pin
+
+A few things are not supported at the time of this writing:
+
+- bidirectional input
+- choosing loop operation. The prefered and far more common closed loop operation is hardcoded except for the case of ERM rom libraries which require open loop.
+- audio to vibe mode
+- external trigger mode
+
+This work originated in the [drv2065 driver](https://github.com/wez/drv2605) and may be able to unify someday.
 
 ## License
 
 Licensed under either of:
 
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-  http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 

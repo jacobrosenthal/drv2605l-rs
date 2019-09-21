@@ -1,24 +1,20 @@
 [package]
-name = "drv2605"
+name = "drv2605l"
 version = "0.1.0"
-authors = ["Wez Furlong"]
-keywords = ["embedded-hal-driver"]
-categories = ["embedded", "no-std", "hardware-support", "haptic"]
-description = "A platform agnostic driver for the drv2605 haptic driver"
+authors = ["Jacob Rosenthal"]
+keywords = ["haptic", "motor"]
+categories = ["embedded", "no-std"]
+description = "A platform agnostic driver for the drv2605l haptic driver"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/wez/drv2605"
+repository = "https://github.com/jacobrosenthal/drv2605l-rs"
+edition = "2018"
 
 [dependencies]
-embedded-hal = "~0.2"
+embedded-hal = "0.2.6"
 bitfield = "~0.13"
 
 [dev-dependencies]
-metro_m0 = { version="0.1.0", path = "../atsamd21-rs/metro_m0" }
-cortex-m = "~0.5"
-panic_rtt = "~0.1"
-cortex-m-rt = "~0.5"
-jlink_rtt = "~0.1"
-
-[features]
-use_semihosting = []
+metro_m0 = "0.9.0"
+panic_rtt = "0.3.0"
+jlink_rtt = "0.2.0"
