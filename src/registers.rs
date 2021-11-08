@@ -1,5 +1,11 @@
 use bitfield::bitfield;
 
+pub trait Register {
+    const ADDRESS: u8;
+    // until bitfield supports into
+    fn value(&self) -> u8;
+}
+
 bitfield! {
     pub struct StatusReg(u8);
     impl Debug;
@@ -37,6 +43,18 @@ bitfield! {
     /// 6: DRV2604L (low-voltage version of the DRV2604 device)
     /// 7: DRV2605L (low-voltage version of the DRV2605 device)
     pub device_id, _: 7, 5;
+}
+impl From<u8> for StatusReg {
+    fn from(val: u8) -> Self {
+        StatusReg(val)
+    }
+}
+
+impl Register for StatusReg {
+    const ADDRESS: u8 = 0x00;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -108,6 +126,18 @@ bitfield! {
     /// The `Mode`
     pub into Mode, mode, set_mode: 2, 0;
 }
+impl From<u8> for ModeReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for ModeReg {
+    const ADDRESS: u8 = 0x01;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct RatedVoltageReg(pub u8);
@@ -117,9 +147,22 @@ impl Default for RatedVoltageReg {
         Self(0x3E)
     }
 }
+impl Register for RatedVoltageReg {
+    const ADDRESS: u8 = 0x16;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct OverdriveClampReg(pub u8);
+
+impl Register for OverdriveClampReg {
+    const ADDRESS: u8 = 0x17;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 
 impl Default for OverdriveClampReg {
     fn default() -> Self {
@@ -130,6 +173,19 @@ impl Default for OverdriveClampReg {
 #[derive(Debug)]
 pub struct AutoCalibrationCompensationReg(pub u8);
 
+impl Register for AutoCalibrationCompensationReg {
+    const ADDRESS: u8 = 0x18;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
+impl From<u8> for AutoCalibrationCompensationReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
 impl Default for AutoCalibrationCompensationReg {
     fn default() -> Self {
         Self(0x0C)
@@ -139,9 +195,21 @@ impl Default for AutoCalibrationCompensationReg {
 #[derive(Debug)]
 pub struct AutoCalibrationCompensationBackEmfReg(pub u8);
 
+impl Register for AutoCalibrationCompensationBackEmfReg {
+    const ADDRESS: u8 = 0x19;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 impl Default for AutoCalibrationCompensationBackEmfReg {
     fn default() -> Self {
         Self(0x6C)
+    }
+}
+
+impl From<u8> for AutoCalibrationCompensationBackEmfReg {
+    fn from(val: u8) -> Self {
+        Self(val)
     }
 }
 
@@ -153,6 +221,12 @@ impl Default for OverdriveTimeOffsetReg {
         Self(0x0)
     }
 }
+impl Register for OverdriveTimeOffsetReg {
+    const ADDRESS: u8 = 0x0d;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct SustainTimeOffsetPositiveReg(pub u8);
@@ -160,6 +234,12 @@ pub struct SustainTimeOffsetPositiveReg(pub u8);
 impl Default for SustainTimeOffsetPositiveReg {
     fn default() -> Self {
         Self(0x0)
+    }
+}
+impl Register for SustainTimeOffsetPositiveReg {
+    const ADDRESS: u8 = 0x0e;
+    fn value(&self) -> u8 {
+        self.0
     }
 }
 
@@ -172,12 +252,25 @@ impl Default for SustainTimeOffsetNegativeReg {
     }
 }
 
+impl Register for SustainTimeOffsetNegativeReg {
+    const ADDRESS: u8 = 0x0f;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
 #[derive(Debug)]
 pub struct BrakeTimeOffsetReg(pub u8);
 
 impl Default for BrakeTimeOffsetReg {
     fn default() -> Self {
         Self(0x0)
+    }
+}
+impl Register for BrakeTimeOffsetReg {
+    const ADDRESS: u8 = 0x10;
+    fn value(&self) -> u8 {
+        self.0
     }
 }
 
@@ -243,6 +336,19 @@ bitfield! {
     /// Waveform library selection value. This bit determines which library the
     /// playback engine selects when the GO bit is set.
     pub into Library, library_selection, set_library_selection: 2, 0;
+}
+
+impl From<u8> for LibrarySelectionReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for LibrarySelectionReg {
+    const ADDRESS: u8 = 0x03;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 impl From<Effect> for u8 {
@@ -634,27 +740,26 @@ pub enum Effect {
     SmoothHumFive10,
 }
 
-bitfield! {
-    pub struct WaveformReg(u8);
-    impl Debug;
-    /// When this bit is set, the WAV_FRM_SEQ[6:0] bit is interpreted as a wait
-    /// time in which the playback engine idles. This bit is used to insert timed
-    /// delays between sequentially played waveforms.
-    /// Delay time = 10 ms × WAV_FRM_SEQ[6:0]
-    /// If WAIT = 0, then WAV_FRM_SEQ[6:0] is interpreted as a waveform
-    /// identifier for sequence playback.
-    wait, set_wait: 7;
+pub struct RealTimePlaybackInputReg(pub u8);
+impl Register for RealTimePlaybackInputReg {
+    const ADDRESS: u8 = 0x02;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
 
-    /// Waveform sequence value. This bit holds the waveform identifier of the
-    /// waveform to be played. A waveform identifier is an integer value referring
-    /// to the index position of a waveform in a ROM library. Playback begins at
-    /// register address 0x04 when the user asserts the GO bit (register 0x0C).
-    /// When playback of that waveform ends, the waveform sequencer plays the
-    /// next waveform identifier held in register 0x05, if the next waveform
-    /// identifier is non-zero. The waveform sequencer continues in this way until
-    /// the sequencer reaches an identifier value of zero, or all eight identifiers are
-    /// played (register addresses 0x04 through 0x0B), whichever comes first.
-    waveform_seq, set_waveform_seq: 6, 0;
+impl From<u8> for RealTimePlaybackInputReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+pub struct Waveform0Reg(u8);
+impl Register for Waveform0Reg {
+    const ADDRESS: u8 = 0x05;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 bitfield! {
@@ -671,6 +776,19 @@ bitfield! {
     /// the GO bit to be set or cleared by the external trigger pin. This bit can also
     /// be used to fire the auto-calibration process or the diagnostic process.
     pub go, set_go: 0;
+}
+
+impl From<u8> for GoReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for GoReg {
+    const ADDRESS: u8 = 0x0c;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 bitfield! {
@@ -728,6 +846,19 @@ bitfield! {
     pub bemf_gain, set_bemf_gain: 1, 0;
 }
 
+impl From<u8> for FeedbackControlReg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for FeedbackControlReg {
+    const ADDRESS: u8 = 0x1a;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
 impl Default for FeedbackControlReg {
     fn default() -> Self {
         let mut reg = Self(0);
@@ -761,6 +892,19 @@ bitfield! {
     /// headroom. Higher drive times cause the feedback to react at a slower rate.
     /// Drive Time (ms) = DRIVE_TIME[4:0] × 0.2 ms + 1 ms
     pub drive_time, set_drive_time: 4, 0;
+}
+
+impl From<u8> for Control1Reg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for Control1Reg {
+    const ADDRESS: u8 = 0x1b;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 impl Default for Control1Reg {
@@ -819,6 +963,19 @@ bitfield! {
     /// from the actuator between PWM cycles for flyback mitigation. (Advanced use
     /// only)
     pub idiss_time, set_idiss_time: 1, 0;
+}
+
+impl From<u8> for Control2Reg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for Control2Reg {
+    const ADDRESS: u8 = 0x1c;
+    fn value(&self) -> u8 {
+        self.0
+    }
 }
 
 impl Default for Control2Reg {
@@ -887,6 +1044,19 @@ bitfield! {
     pub lra_open_loop, set_lra_open_loop: 0;
 }
 
+impl From<u8> for Control3Reg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for Control3Reg {
+    const ADDRESS: u8 = 0x1d;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
 impl Default for Control3Reg {
     fn default() -> Self {
         let mut reg = Self(0);
@@ -934,6 +1104,19 @@ bitfield! {
     pub otp_program, set_otp_program: 1;
 }
 
+impl From<u8> for Control4Reg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for Control4Reg {
+    const ADDRESS: u8 = 0x1e;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
 impl Default for Control4Reg {
     fn default() -> Self {
         let mut reg = Self(0);
@@ -979,109 +1162,23 @@ bitfield! {
 
 }
 
+impl From<u8> for Control5Reg {
+    fn from(val: u8) -> Self {
+        Self(val)
+    }
+}
+
+impl Register for Control5Reg {
+    const ADDRESS: u8 = 0x1f;
+    fn value(&self) -> u8 {
+        self.0
+    }
+}
+
 impl Default for Control5Reg {
     fn default() -> Self {
         let mut reg = Self(0);
         reg.set_auto_ol_cnt(0x2);
         reg
     }
-}
-
-#[allow(unused)]
-#[derive(Copy, Clone)]
-#[repr(u8)]
-pub enum Register {
-    Status = 0x00,
-    Mode = 0x01,
-    /// This field is the entry point for real-time playback (RTP) data. The
-    /// DRV2605 playback engine drives the RTP_INPUT[7:0] value to the load when
-    /// MODE[2:0] = 5 (RTP mode). The RTP_INPUT[7:0] value can be updated in
-    /// real-time by the host controller to create haptic waveforms. The
-    /// RTP_INPUT[7:0] value is interpreted as signed by default, but can be set
-    /// to unsigned by the DATA_FORMAT_RTP bit in register 0x1D. When the haptic
-    /// waveform is complete, the user can idle the device by setting MODE[2:0]
-    /// = 0, or alternatively by setting STANDBY = 1.
-    RealTimePlaybackInput = 0x02,
-    LibrarySelection = 0x03,
-    WaveformSequence0 = 0x04,
-    WaveformSequence1 = 0x05,
-    WaveformSequence2 = 0x06,
-    WaveformSequence3 = 0x07,
-    WaveformSequence4 = 0x08,
-    WaveformSequence5 = 0x09,
-    WaveformSequence6 = 0x0a,
-    WaveformSequence7 = 0x0b,
-    Go = 0x0c,
-    OverdriveTimeOffset = 0x0d,
-    SustainTimeOffsetPositive = 0x0e,
-    SustainTimeOffsetNegative = 0x0f,
-    BrakeTimeOffset = 0x10,
-
-    // todo
-    AudioToVibeControl = 0x11,
-    AudioToVibeMinimumInputLevel = 0x12,
-    AudioToVibeMaximumInputLevel = 0x13,
-    AudioToVibeMinimumOutputDrive = 0x14,
-    AudioToVibeMaximumOutputDrive = 0x15,
-
-    /// This bit sets the reference voltage for full-scale output during
-    /// closed-loop operation. The auto-calibration routine uses this register
-    /// as an input, so this register must be written with the rated voltage
-    /// value of the motor before calibration is performed. This register is
-    /// ignored for open-loop operation because the overdrive voltage sets the
-    /// reference for that case. Any modification of this register value should
-    /// be followed by calibration to set A_CAL_BEMF appropriately.
-    ///
-    /// See the Rated Voltage Programming section for calculating the correct
-    /// register value.
-    RatedVoltage = 0x16,
-
-    /// During closed-loop operation the actuator feedback allows the output
-    /// voltage to go above the rated voltage during the automatic overdrive and
-    /// automatic braking periods. This register sets a clamp so that the
-    /// automatic overdrive is bounded. This bit also serves as the full-scale
-    /// reference voltage for open-loop operation.
-    ///
-    /// See the Overdrive Voltage-Clamp Programming section for calculating the
-    /// correct register value.
-    ///
-    /// 8.5.2.2 Overdrive Voltage-Clamp Programming LRA and ERM are swapped,
-    /// confirmed https://e2e.ti.com/support/other_analog/haptics/f/927/t/655886
-    /// (21.64x10-3 x OD_CLAMP[7:0] x (tDRIVE_TIME - 300x10^-6)) / (tDRIVE_TIME
-    /// + tIDISS_TIME + tBLANKING_TIME)
-    OverdriveClampVoltage = 0x17,
-
-    /// This register contains the voltage-compensation result after execution
-    /// of auto calibration. The value stored in the A_CAL_COMP bit compensates
-    /// for any resistive losses in the driver. The calibration routine checks
-    /// the impedance of the actuator to automatically determine an appropriate
-    /// value. The auto- calibration compensation-result value is multiplied by
-    /// the drive gain during playback.
-    ///
-    /// Auto-calibration compensation coefficient = 1 + A_CAL_COMP[7:0] / 255
-    AutoCalibrationCompensationResult = 0x18,
-
-    /// This register contains the rated back-EMF result after execution of auto
-    /// calibration. The A_CAL_BEMF[7:0] bit is the level of back-EMF voltage that the
-    /// actuator gives when the actuator is driven at the rated voltage. The DRV2605
-    /// playback engine uses this the value stored in this bit to automatically determine
-    /// the appropriate feedback gain for closed-loop operation.
-    /// Auto-calibration back-EMF (V) = (A_CAL_BEMF[7:0] / 255) × 1.22 V /
-    /// BEMF_GAIN[1:0]
-    AutoCalibrationBackEMFResult = 0x19,
-
-    FeedbackControl = 0x1a,
-
-    Control1 = 0x1b,
-    Control2 = 0x1c,
-    Control3 = 0x1d,
-    Control4 = 0x1e,
-
-    Control5 = 0x1f,
-
-    LRAOpenLoopPeriod = 0x20,
-
-    //todo
-    VBatVoltageMonitor = 0x21,
-    LraResonancePeriod = 0x22,
 }
