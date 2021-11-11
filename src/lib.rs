@@ -40,7 +40,7 @@ where
         // haptic.reset()?;
 
         match calibration {
-            // device will get calibration values out of the otp if the otp bit is set
+            // device will get c/alibration values out of the otp if the otp bit is set
             Calibration::Otp => {
                 if !haptic.is_otp()? {
                     return Err(DrvError::OTPNotProgrammed);
@@ -159,7 +159,7 @@ where
 
     /// Sets up to 8 Effects to play in order when `set_go` is called. Stops
     /// playing early if `Effect::None` is used.
-    /// todo dont hardcode to 8, pass slice?
+    // todo dont hardcode to 8, pass slice? but then need to assert <=8
     pub fn set_rom(&mut self, roms: &[Effect; 8]) -> Result<(), DrvError> {
         let buf: [u8; 9] = [
             Waveform0Reg::ADDRESS,
@@ -275,9 +275,9 @@ where
         Ok(())
     }
 
-    /// performs the equivalent operation of power cycling the device. Any
-    /// playback operations are immediately interrupted, and all registers are
-    /// reset to the default values.
+    // performs the equivalent operation of power cycling the device. Any
+    // playback operations are immediately interrupted, and all registers are
+    // reset to the default values.
     fn reset(&mut self) -> Result<(), DrvError> {
         let mut mode = ModeReg::default();
         mode.set_dev_reset(true);
@@ -288,6 +288,7 @@ where
         Ok(())
     }
 
+    /// Send calibration `LoadParams`
     fn set_calibration(&mut self, load: LoadParams) -> Result<(), DrvError> {
         let mut fbcr: FeedbackControlReg = self.read()?;
         fbcr.set_bemf_gain(load.back_emf_gain);
@@ -320,8 +321,7 @@ where
         Ok(())
     }
 
-    /// Run auto calibration which updates the calibration registers and returns
-    /// the resulting LoadParams
+    /// Run auto calibration which and return the resulting LoadParams
     fn calibrate(&mut self) -> Result<LoadParams, DrvError> {
         let mut mode: ModeReg = self.read()?;
         mode.set_standby(false);
@@ -341,7 +341,7 @@ where
         self.calibration()
     }
 
-    /// Check if the device's OTP has been set
+    /// Check if the device's LoadParams have been set in the nonvolatile memory
     fn is_otp(&mut self) -> Result<bool, DrvError> {
         let reg4: Control4Reg = self.read()?;
         Ok(reg4.otp_status())
@@ -368,12 +368,12 @@ const ADDRESS: u8 = 0x5a;
 /// Selection of calibration options required for initial device construction
 pub enum Calibration {
     /// Many calibration params can be defaulted, and maybe the entire thing for
-    /// some ERM motors. Required params for LRA motors especially though should
-    /// calculated from the drv2605l and motor datasheet.
+    /// some motors. Required params for LRA motors especially though should
+    /// calculated from the drv2605l and motor datasheets.
     ///
     /// NOTE: In general, but when doing autocalibration, be sure to secure the
-    /// motor to some kind of mass. It can't calibrate if its jumping around on
-    /// a board or a desk.
+    /// motor to some kind of mass. It can't calibrate if it is jumping around
+    /// on a board or a desk.
     Auto(CalibrationParams),
     /// Load previously calibrated values. It is common to do an autocalibration
     /// and then read back the calibration parameters so you can hardcode them
